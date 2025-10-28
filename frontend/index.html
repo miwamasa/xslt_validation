@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSLT Validation Checker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>XSLT Validation Checker</h1>
+            <p class="subtitle">XSLTの妥当性を理論的に検証するツール</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="source-xsd">Source XSD</label>
+                    <textarea id="source-xsd" placeholder="ソースXSDを入力してください..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="target-xsd">Target XSD</label>
+                    <textarea id="target-xsd" placeholder="ターゲットXSDを入力してください..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="xslt">XSLT</label>
+                    <textarea id="xslt" placeholder="XSLTを入力してください..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button id="validate-btn" class="btn btn-primary">検証を実行</button>
+                    <button id="load-sample-btn" class="btn btn-secondary">サンプルを読み込む</button>
+                    <button id="clear-btn" class="btn btn-secondary">クリア</button>
+                </div>
+            </div>
+
+            <div class="results-section" id="results-section" style="display: none;">
+                <h2>検証結果</h2>
+
+                <div class="result-card" id="subset-check">
+                    <h3>1. XSLTサブセットチェック</h3>
+                    <div id="subset-content"></div>
+                </div>
+
+                <div class="result-card" id="grammar-info">
+                    <h3>2. 木文法情報</h3>
+                    <div class="grammar-section">
+                        <h4>ソーススキーマ</h4>
+                        <div id="source-grammar-content"></div>
+                    </div>
+                    <div class="grammar-section">
+                        <h4>ターゲットスキーマ</h4>
+                        <div id="target-grammar-content"></div>
+                    </div>
+                </div>
+
+                <div class="result-card" id="mtt-info">
+                    <h3>3. MTT (Macro Tree Transducer)</h3>
+                    <div id="mtt-content"></div>
+                </div>
+
+                <div class="result-card" id="type-validation">
+                    <h3>4. 型保存性の検証</h3>
+                    <div id="type-validation-content"></div>
+                </div>
+
+                <div class="result-card" id="coverage-matrix">
+                    <h3>5. カバレッジマトリクス</h3>
+                    <div id="coverage-content"></div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>検証中...</p>
+            </div>
+
+            <div class="error-message" id="error-message" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <p>Based on Tree Grammar and MTT theory</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
