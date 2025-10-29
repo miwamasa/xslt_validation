@@ -188,12 +188,16 @@ class XSDParser:
         choice = ct.find(f"./{{{XS_NS}}}choice")
         all_elem = ct.find(f"./{{{XS_NS}}}all")
 
+        has_child_elements = False
         if sequence is not None:
             self._process_sequence(sequence, element_name, cardinality)
+            has_child_elements = True
         elif choice is not None:
             self._process_choice(choice, element_name, cardinality)
+            has_child_elements = True
         elif all_elem is not None:
             self._process_all(all_elem, element_name, cardinality)
+            has_child_elements = True
         else:
             # Simple content or empty
             simple_content = ct.find(f"./{{{XS_NS}}}simpleContent")
@@ -204,6 +208,16 @@ class XSDParser:
                     self.grammar.type_constraints[element_name] = TypeConstraint(
                         base_type=base
                     )
+
+        # If element has only attributes (no child elements), create an empty production
+        if not has_child_elements and attributes:
+            prod = Production(
+                lhs=element_name,
+                rhs=[],  # Empty content, attributes only
+                element_type="attributes-only",
+                cardinality=cardinality
+            )
+            self.grammar.productions.append(prod)
 
     def _process_sequence(self, sequence: ET.Element, parent_name: str, cardinality: tuple):
         """Process xs:sequence"""
