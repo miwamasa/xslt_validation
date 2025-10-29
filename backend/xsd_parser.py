@@ -55,8 +55,8 @@ class XSDParser:
         # First pass: collect type definitions
         self._collect_types(root)
 
-        # Second pass: process elements
-        for elem in root.findall(f".//{{{XS_NS}}}element"):
+        # Second pass: process top-level elements only
+        for elem in root.findall(f"./{{{XS_NS}}}element"):
             if elem.get("name"):  # Top-level element
                 element_name = elem.get("name")
                 if not self.grammar.root_element:
