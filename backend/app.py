@@ -14,6 +14,7 @@ from backend.xsd_parser import XSDParser
 from backend.mtt_converter import XSLTToMTTConverter
 from backend.type_validator import TypePreservationValidator
 from backend.preimage_computer import PreimageComputer
+from backend.validity_checker import ValidityChecker
 
 app = Flask(__name__)
 CORS(app)
@@ -46,7 +47,8 @@ def validate():
             'target_grammar': {},
             'mtt': {},
             'type_validation': {},
-            'preimage': {}
+            'preimage': {},
+            'validity': {}
         }
 
         # Step 1: Check XSLT subset compliance
@@ -193,6 +195,38 @@ def validate():
                 'accepted_patterns': [],
                 'rejected_patterns': [],
                 'statistics': {}
+            }
+
+        # Step 7: Validity checking - L(Src) ⊆ pre_T(L(Tgt))
+        try:
+            validity_checker = ValidityChecker()
+            validity_result = validity_checker.check_validity(
+                source_grammar,
+                preimage_result
+            )
+
+            result['validity'] = {
+                'is_valid': validity_result.is_valid,
+                'total_source_patterns': validity_result.total_source_patterns,
+                'covered_patterns': validity_result.covered_patterns,
+                'uncovered_patterns': validity_result.uncovered_patterns,
+                'coverage_percentage': validity_result.coverage_percentage,
+                'explanation': validity_result.explanation,
+                'counterexamples': [
+                    {
+                        'element': ce.element,
+                        'pattern': ce.pattern,
+                        'reason': ce.reason
+                    }
+                    for ce in validity_result.counterexamples
+                ]
+            }
+        except Exception as e:
+            # Validity checking is optional, don't fail the whole request
+            result['validity'] = {
+                'error': f'Error checking validity: {str(e)}',
+                'is_valid': None,
+                'explanation': 'Could not perform validity check'
             }
 
         return jsonify(result), 200

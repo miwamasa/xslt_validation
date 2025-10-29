@@ -384,3 +384,107 @@ footer {
     font-style: italic;
     padding: 10px;
 }
+
+/* Validity styles */
+.validity-section {
+    margin-top: 10px;
+}
+
+.validity-explanation {
+    background: #e3f2fd;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid #2196f3;
+}
+
+.validity-explanation h4 {
+    color: #1976d2;
+    margin-bottom: 10px;
+}
+
+.validity-stats {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+.validity-stats p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.counterexamples-section {
+    margin: 20px 0;
+}
+
+.counterexamples-list {
+    list-style: none;
+    padding: 0;
+}
+
+.counterexample-item {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.counterexample-item strong {
+    color: #e65100;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+}
+
+.counterexample-reason {
+    color: #666;
+    font-size: 14px;
+    display: block;
+    margin-top: 5px;
+}
+
+.counterexample-note {
+    background: #fffde7;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #fbc02d;
+    margin-top: 10px;
+}
+
+.counterexample-note p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.theory-note {
+    background: #f3e5f5;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #9c27b0;
+    margin-top: 20px;
+}
+
+.theory-note h4 {
+    color: #7b1fa2;
+    margin-bottom: 10px;
+}
+
+.theory-note ul {
+    margin: 10px 0;
+    padding-left: 25px;
+}
+
+.theory-note li {
+    margin: 8px 0;
+    line-height: 1.6;
+    color: #555;
+}
+
+.theory-note p {
+    margin: 10px 0;
+    color: #555;
+}
