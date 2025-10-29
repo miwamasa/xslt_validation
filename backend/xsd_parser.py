@@ -135,9 +135,50 @@ class XSDParser:
         attributes = []
         for attr in ct.findall(f".//{{{XS_NS}}}attribute"):
             attr_name = attr.get("name")
-            attr_type = attr.get("type", "xs:string").replace("xs:", "")
+            attr_type_ref = attr.get("type")
             required = attr.get("use") == "required"
-            attributes.append((attr_name, attr_type, required))
+
+            # Check for inline simpleType with restrictions
+            inline_simple = attr.find(f"./{{{XS_NS}}}simpleType")
+            if inline_simple is not None:
+                restriction = inline_simple.find(f"./{{{XS_NS}}}restriction")
+                if restriction is not None:
+                    base = restriction.get("base", "xs:string").replace("xs:", "")
+
+                    # Collect restrictions
+                    restrictions = {}
+                    for child in restriction:
+                        local_name = child.tag.replace(f"{{{XS_NS}}}", "")
+                        value = child.get("value")
+                        if value:
+                            restrictions[local_name] = value
+
+                    # Add type constraint for this attribute
+                    self.grammar.type_constraints[attr_name] = TypeConstraint(
+                        base_type=base,
+                        restrictions=restrictions
+                    )
+                    attributes.append((attr_name, base, required))
+                else:
+                    # No restriction, use base type
+                    attr_type = "string"
+                    attributes.append((attr_name, attr_type, required))
+            elif attr_type_ref:
+                attr_type = attr_type_ref.replace("xs:", "")
+                # Add type constraint for basic types
+                self.grammar.type_constraints[attr_name] = TypeConstraint(
+                    base_type=attr_type,
+                    restrictions={}
+                )
+                attributes.append((attr_name, attr_type, required))
+            else:
+                # Default to string
+                attr_type = "string"
+                self.grammar.type_constraints[attr_name] = TypeConstraint(
+                    base_type=attr_type,
+                    restrictions={}
+                )
+                attributes.append((attr_name, attr_type, required))
 
         if attributes:
             self.grammar.attributes[element_name] = attributes
