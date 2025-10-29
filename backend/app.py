@@ -3,10 +3,11 @@ Flask API for XSLT Validation System
 Provides endpoints for validating XSLT transformations
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import traceback
+import os
 
 from backend.xslt_checker import XSLTSubsetChecker
 from backend.xsd_parser import XSDParser
@@ -313,6 +314,20 @@ def convert_to_mtt():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@app.route('/sample2/<path:filename>', methods=['GET'])
+def serve_sample2(filename):
+    """Serve sample2 files"""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sample2_dir = os.path.join(base_dir, 'sample2')
+        return send_from_directory(sample2_dir, filename)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'File not found: {filename}'
+        }), 404
 
 
 @app.route('/health', methods=['GET'])
