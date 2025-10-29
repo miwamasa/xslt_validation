@@ -298,3 +298,89 @@ footer {
     font-family: 'Courier New', monospace;
     font-size: 13px;
 }
+
+/* Preimage styles */
+.preimage-section {
+    margin-top: 10px;
+}
+
+.preimage-explanation {
+    background: #e8eaf6;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+    line-height: 1.6;
+}
+
+.accepted-patterns {
+    list-style: none;
+    padding: 0;
+}
+
+.accepted-patterns li {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.accepted-patterns li strong {
+    color: #2e7d32;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+}
+
+.constraint {
+    color: #555;
+    font-style: italic;
+    font-size: 14px;
+    margin-top: 5px;
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+}
+
+.rejected-patterns {
+    list-style: none;
+    padding: 0;
+}
+
+.rejected-patterns li {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.rejected-pattern {
+    color: #c62828;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.rejection-reason {
+    color: #666;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.preimage-stats {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.preimage-stats p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.no-data {
+    color: #999;
+    font-style: italic;
+    padding: 10px;
+}

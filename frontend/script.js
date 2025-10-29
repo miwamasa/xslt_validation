@@ -81,6 +81,9 @@ function displayResults(data) {
 
     // 5. Coverage Matrix
     displayCoverageMatrix(data.type_validation?.coverage_matrix);
+
+    // 6. Preimage Computation
+    displayPreimage(data.preimage);
 }
 
 function displaySubsetCheck(subsetCheck) {
@@ -279,6 +282,83 @@ function displayCoverageMatrix(coverage) {
     html += `ターゲット要素: ${coverage.target_elements}, `;
     html += `MTT規則: ${coverage.mtt_rules}`;
     html += `</p>`;
+
+    content.innerHTML = html;
+}
+
+function displayPreimage(preimage) {
+    const content = document.getElementById('preimage-content');
+
+    if (!preimage) {
+        content.innerHTML = '<p>前像計算情報がありません。</p>';
+        return;
+    }
+
+    if (preimage.error) {
+        content.innerHTML = `<p class="error-message">${escapeHtml(preimage.error)}</p>`;
+        return;
+    }
+
+    let html = '<div class="preimage-section">';
+
+    // Explanation
+    html += '<p class="preimage-explanation">';
+    html += '前像 pre<sub>M</sub>(L(G<sub>T</sub>)) は、MTT M による変換後に';
+    html += 'ターゲット文法 G<sub>T</sub> の言語に含まれる入力木の集合を表します。';
+    html += '</p>';
+
+    // Accepted Patterns
+    html += '<h4>受理される入力パターン:</h4>';
+    if (preimage.accepted_patterns && preimage.accepted_patterns.length > 0) {
+        html += '<ul class="accepted-patterns">';
+        preimage.accepted_patterns.forEach(pattern => {
+            let patternStr = escapeHtml(pattern.element);
+            if (pattern.children && pattern.children.length > 0) {
+                patternStr += '(' + pattern.children.map(escapeHtml).join(', ') + ')';
+            }
+
+            html += `<li><strong>${patternStr}</strong>`;
+
+            if (pattern.constraints && pattern.constraints.length > 0) {
+                html += '<br><span class="constraint">条件: ';
+                html += pattern.constraints.map(c => escapeHtml(c)).join(' かつ ');
+                html += '</span>';
+            }
+
+            html += '</li>';
+        });
+        html += '</ul>';
+    } else {
+        html += '<p class="no-data">受理されるパターンがありません。</p>';
+    }
+
+    // Rejected Patterns
+    if (preimage.rejected_patterns && preimage.rejected_patterns.length > 0) {
+        html += '<h4>拒否されたパターン:</h4>';
+        html += '<ul class="rejected-patterns">';
+        preimage.rejected_patterns.forEach(([pattern, reason]) => {
+            html += `<li>`;
+            html += `<span class="rejected-pattern">✗ ${escapeHtml(pattern)}</span><br>`;
+            html += `<span class="rejection-reason">理由: ${escapeHtml(reason)}</span>`;
+            html += `</li>`;
+        });
+        html += '</ul>';
+    }
+
+    // Statistics
+    if (preimage.statistics) {
+        html += '<h4>統計情報:</h4>';
+        html += '<div class="preimage-stats">';
+        html += `<p><strong>MTT規則総数:</strong> ${preimage.statistics.total_rules}</p>`;
+        html += `<p><strong>受理パターン数:</strong> ${preimage.statistics.accepted_patterns}</p>`;
+        html += `<p><strong>拒否パターン数:</strong> ${preimage.statistics.rejected_patterns}</p>`;
+
+        const coverage = (preimage.statistics.coverage * 100).toFixed(1);
+        html += `<p><strong>カバレッジ:</strong> ${coverage}%</p>`;
+        html += '</div>';
+    }
+
+    html += '</div>';
 
     content.innerHTML = html;
 }

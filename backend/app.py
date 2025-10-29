@@ -12,6 +12,7 @@ from backend.xslt_checker import XSLTSubsetChecker
 from backend.xsd_parser import XSDParser
 from backend.mtt_converter import XSLTToMTTConverter
 from backend.type_validator import TypePreservationValidator
+from backend.preimage_computer import PreimageComputer
 
 app = Flask(__name__)
 CORS(app)
@@ -43,7 +44,8 @@ def validate():
             'source_grammar': {},
             'target_grammar': {},
             'mtt': {},
-            'type_validation': {}
+            'type_validation': {},
+            'preimage': {}
         }
 
         # Step 1: Check XSLT subset compliance
@@ -155,6 +157,42 @@ def validate():
                 'success': False,
                 'error': f'Error validating type preservation: {str(e)}'
             }), 400
+
+        # Step 6: Compute preimage
+        try:
+            preimage_computer = PreimageComputer()
+            preimage_result = preimage_computer.compute_preimage(
+                target_grammar,
+                mtt
+            )
+
+            result['preimage'] = {
+                'accepted_patterns': [
+                    {
+                        'element': p.element,
+                        'children': p.children,
+                        'constraints': p.constraints,
+                        'pattern_string': str(p)
+                    }
+                    for p in preimage_result.accepted_patterns
+                ],
+                'rejected_patterns': [
+                    {
+                        'pattern': pattern,
+                        'reason': reason
+                    }
+                    for pattern, reason in preimage_result.rejected_patterns
+                ],
+                'statistics': preimage_result.statistics
+            }
+        except Exception as e:
+            # Preimage computation is optional, don't fail the whole request
+            result['preimage'] = {
+                'error': f'Error computing preimage: {str(e)}',
+                'accepted_patterns': [],
+                'rejected_patterns': [],
+                'statistics': {}
+            }
 
         return jsonify(result), 200
 
