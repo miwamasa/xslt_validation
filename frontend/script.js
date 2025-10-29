@@ -7,6 +7,7 @@ const targetXsdInput = document.getElementById('target-xsd');
 const xsltInput = document.getElementById('xslt');
 const validateBtn = document.getElementById('validate-btn');
 const loadSampleBtn = document.getElementById('load-sample-btn');
+const loadSample2Btn = document.getElementById('load-sample2-btn');
 const clearBtn = document.getElementById('clear-btn');
 const resultsSection = document.getElementById('results-section');
 const loadingDiv = document.getElementById('loading');
@@ -15,6 +16,7 @@ const errorMessageDiv = document.getElementById('error-message');
 // Event listeners
 validateBtn.addEventListener('click', validateXSLT);
 loadSampleBtn.addEventListener('click', loadSample);
+loadSample2Btn.addEventListener('click', loadSample2);
 clearBtn.addEventListener('click', clearInputs);
 
 async function validateXSLT() {
@@ -379,6 +381,24 @@ async function loadSample() {
     } catch (error) {
         // If samples don't exist, load hardcoded examples
         loadHardcodedSamples();
+    }
+}
+
+async function loadSample2() {
+    try {
+        // Load sample2 files (complex scenario)
+        const [sourceXsd, targetXsd, xslt] = await Promise.all([
+            fetch('/sample2/source.xsd').then(r => r.text()),
+            fetch('/sample2/target.xsd').then(r => r.text()),
+            fetch('/sample2/transform.xslt').then(r => r.text())
+        ]);
+
+        sourceXsdInput.value = sourceXsd;
+        targetXsdInput.value = targetXsd;
+        xsltInput.value = xslt;
+
+    } catch (error) {
+        showError('サンプル2の読み込みに失敗しました: ' + error.message);
     }
 }
 

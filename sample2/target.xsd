@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <!-- Organization root element with staff and divisions -->
+  <xs:element name="Organization">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Staff" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="fullName" type="xs:string" use="required"/>
+            <xs:attribute name="age" use="required">
+              <xs:simpleType>
+                <xs:restriction base="xs:integer">
+                  <xs:minInclusive value="18"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="position" use="required">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="engineer"/>
+                  <xs:enumeration value="lead"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="income" use="required">
+              <xs:simpleType>
+                <xs:restriction base="xs:decimal">
+                  <xs:minExclusive value="0"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Division" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="title" type="xs:string" use="required"/>
+            <xs:attribute name="funds" use="required">
+              <xs:simpleType>
+                <xs:restriction base="xs:decimal">
+                  <xs:minInclusive value="0"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
