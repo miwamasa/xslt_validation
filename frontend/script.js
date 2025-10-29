@@ -86,6 +86,9 @@ function displayResults(data) {
 
     // 6. Preimage Computation
     displayPreimage(data.preimage);
+
+    // 7. Validity Check
+    displayValidity(data.validity);
 }
 
 function displaySubsetCheck(subsetCheck) {
@@ -359,6 +362,85 @@ function displayPreimage(preimage) {
         html += `<p><strong>カバレッジ:</strong> ${coverage}%</p>`;
         html += '</div>';
     }
+
+    html += '</div>';
+
+    content.innerHTML = html;
+}
+
+function displayValidity(validity) {
+    const content = document.getElementById('validity-content');
+
+    if (!validity) {
+        content.innerHTML = '<p>妥当性検証情報がありません。</p>';
+        return;
+    }
+
+    if (validity.error) {
+        content.innerHTML = `<p class="error-message">${escapeHtml(validity.error)}</p>`;
+        return;
+    }
+
+    let html = '<div class="validity-section">';
+
+    // Validity status badge
+    const status = validity.is_valid ? 'valid' : 'invalid';
+    const statusText = validity.is_valid ? '✓ 妥当' : '✗ 妥当でない';
+    html += `<span class="status-badge status-${status}">${statusText}</span>`;
+
+    // Explanation
+    html += '<div class="validity-explanation">';
+    html += `<h4>理論的検証: L(Src) ⊆ pre<sub>T</sub>(L(Tgt))</h4>`;
+
+    const explanationLines = validity.explanation.split('\n');
+    explanationLines.forEach(line => {
+        if (line.trim()) {
+            html += `<p>${escapeHtml(line)}</p>`;
+        }
+    });
+    html += '</div>';
+
+    // Statistics
+    html += '<div class="validity-stats">';
+    html += '<h4>統計情報:</h4>';
+    html += `<p><strong>総ソースパターン数:</strong> ${validity.total_source_patterns}</p>`;
+    html += `<p><strong>カバー済みパターン:</strong> ${validity.covered_patterns}</p>`;
+    html += `<p><strong>未カバーパターン:</strong> ${validity.uncovered_patterns}</p>`;
+    html += `<p><strong>カバレッジ:</strong> ${validity.coverage_percentage.toFixed(1)}%</p>`;
+    html += '</div>';
+
+    // Counterexamples (if any)
+    if (validity.counterexamples && validity.counterexamples.length > 0) {
+        html += '<div class="counterexamples-section">';
+        html += '<h4>反例（前像でカバーされないソースパターン）:</h4>';
+        html += '<ul class="counterexamples-list">';
+
+        validity.counterexamples.forEach((ce, index) => {
+            html += '<li class="counterexample-item">';
+            html += `<strong>${index + 1}. ${escapeHtml(ce.pattern)}</strong><br>`;
+            html += `<span class="counterexample-reason">理由: ${escapeHtml(ce.reason)}</span>`;
+            html += '</li>';
+        });
+
+        html += '</ul>';
+        html += '<div class="counterexample-note">';
+        html += '<p><strong>注意:</strong> これらの反例は、ソース文法で有効だがMTT変換で';
+        html += 'ターゲット文法に変換されない、または制約を満たさないパターンです。</p>';
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // Complement intersection explanation
+    html += '<div class="theory-note">';
+    html += '<h4>理論的背景:</h4>';
+    html += '<p>この検証は以下の同値な条件をチェックします:</p>';
+    html += '<ul>';
+    html += '<li>∀s∈L(Src). T(s)∈L(Tgt) （すべてのソースは有効なターゲットに変換される）</li>';
+    html += '<li>L(Src) ⊆ pre<sub>T</sub>(L(Tgt)) （ソース言語が前像に含まれる）</li>';
+    html += '<li>L(Src) ∩ complement(pre<sub>T</sub>(L(Tgt))) = ∅ （補集合との交差が空）</li>';
+    html += '</ul>';
+    html += '<p>反例が存在しない場合、XSLTの妥当性が保証されます。</p>';
+    html += '</div>';
 
     html += '</div>';
 
