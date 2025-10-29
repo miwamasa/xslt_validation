@@ -202,34 +202,51 @@ class TypePreservationValidator:
         mtt: MTT,
         target_grammar: TreeGrammar
     ) -> str:
-        """Find corresponding target element"""
-        # Look through MTT rules to find mapping
+        """Find corresponding target element or attribute"""
+        # Look through ALL MTT rules to find where source_elem is used
         for rule in mtt.rules:
-            if source_elem in rule.lhs_pattern:
-                # Try to extract target element from output
-                output = rule.rhs_output
-                if isinstance(output, dict):
-                    target = self._extract_target_from_output(output)
-                    if target:
-                        return target
+            # Check if this rule uses source_elem in its output
+            output = rule.rhs_output
+            if isinstance(output, dict):
+                target = self._extract_target_from_output(output, source_elem)
+                if target:
+                    return target
 
         # Fallback: check if same name exists in target
         for prod in target_grammar.productions:
             if prod.lhs == source_elem:
                 return source_elem
 
+        # Check in attributes
+        for elem_name, attrs in target_grammar.attributes.items():
+            for attr_name, attr_type, required in attrs:
+                if attr_name.lower() == source_elem.lower():
+                    return attr_name
+
         return ""
 
-    def _extract_target_from_output(self, output: Dict) -> str:
-        """Extract target element name from output tree"""
+    def _extract_target_from_output(self, output: Dict, source_elem: str = "") -> str:
+        """Extract target element or attribute name from output tree"""
         if output.get("type") == "element":
-            return output.get("name", "")
+            element_name = output.get("name", "")
+
+            # Check if source_elem is used in attributes
+            if source_elem and output.get("attributes"):
+                for attr in output["attributes"]:
+                    # Check if value_expr references source_elem
+                    if attr.get("value_expr") == source_elem:
+                        return attr.get("name", "")
+
+            return element_name
         elif output.get("type") == "sequence" and output.get("children"):
             for child in output["children"]:
                 if isinstance(child, dict):
-                    name = self._extract_target_from_output(child)
+                    name = self._extract_target_from_output(child, source_elem)
                     if name:
                         return name
+        elif output.get("type") == "if" and output.get("then"):
+            return self._extract_target_from_output(output["then"], source_elem)
+
         return ""
 
     def _are_types_compatible(
