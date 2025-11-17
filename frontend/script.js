@@ -395,21 +395,23 @@ function displayValidity(validity) {
     html += '<div class="validity-explanation">';
     html += `<h4>理論的検証: L(Src) ⊆ pre<sub>T</sub>(L(Tgt))</h4>`;
 
-    const explanationLines = validity.explanation.split('\n');
-    explanationLines.forEach(line => {
-        if (line.trim()) {
-            html += `<p>${escapeHtml(line)}</p>`;
-        }
-    });
+    if (validity.explanation) {
+        const explanationLines = validity.explanation.split('\n');
+        explanationLines.forEach(line => {
+            if (line.trim()) {
+                html += `<p>${escapeHtml(line)}</p>`;
+            }
+        });
+    }
     html += '</div>';
 
     // Statistics
     html += '<div class="validity-stats">';
     html += '<h4>統計情報:</h4>';
-    html += `<p><strong>総ソースパターン数:</strong> ${validity.total_source_patterns}</p>`;
-    html += `<p><strong>カバー済みパターン:</strong> ${validity.covered_patterns}</p>`;
-    html += `<p><strong>未カバーパターン:</strong> ${validity.uncovered_patterns}</p>`;
-    html += `<p><strong>カバレッジ:</strong> ${validity.coverage_percentage.toFixed(1)}%</p>`;
+    html += `<p><strong>総ソースパターン数:</strong> ${validity.total_source_patterns || 0}</p>`;
+    html += `<p><strong>カバー済みパターン:</strong> ${validity.covered_patterns || 0}</p>`;
+    html += `<p><strong>未カバーパターン:</strong> ${validity.uncovered_patterns || 0}</p>`;
+    html += `<p><strong>カバレッジ:</strong> ${(validity.coverage_percentage || 0).toFixed(1)}%</p>`;
     html += '</div>';
 
     // Counterexamples (if any)
@@ -613,19 +615,21 @@ function displayStrictValidity(strictValidity) {
     html += '<div class="strict-explanation">';
     html += '<h4>SMTソルバー（Z3）による厳密な制約検証</h4>';
 
-    const explanationLines = strictValidity.explanation.split('\n');
-    explanationLines.forEach(line => {
-        if (line.trim()) {
-            html += `<p>${escapeHtml(line)}</p>`;
-        }
-    });
+    if (strictValidity.explanation) {
+        const explanationLines = strictValidity.explanation.split('\n');
+        explanationLines.forEach(line => {
+            if (line.trim()) {
+                html += `<p>${escapeHtml(line)}</p>`;
+            }
+        });
+    }
     html += '</div>';
 
     // Statistics
     html += '<div class="strict-stats">';
     html += '<h4>検証統計:</h4>';
-    html += `<p><strong>検証したパターン数:</strong> ${strictValidity.total_patterns_checked}</p>`;
-    html += `<p><strong>制約違反のあるパターン:</strong> ${strictValidity.patterns_with_issues}</p>`;
+    html += `<p><strong>検証したパターン数:</strong> ${strictValidity.total_patterns_checked || 0}</p>`;
+    html += `<p><strong>制約違反のあるパターン:</strong> ${strictValidity.patterns_with_issues || 0}</p>`;
     html += '</div>';
 
     // Counterexamples (if any)
