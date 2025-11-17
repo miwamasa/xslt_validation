@@ -488,3 +488,139 @@ footer {
     margin: 10px 0;
     color: #555;
 }
+
+/* Strict validation styles */
+.btn-strict {
+    background: linear-gradient(135deg, #d32f2f 0%, #7b1fa2 100%);
+}
+
+.btn-strict:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+}
+
+.strict-validity-section {
+    margin-top: 10px;
+}
+
+.strict-explanation {
+    background: #fce4ec;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid #d32f2f;
+}
+
+.strict-explanation h4 {
+    color: #c62828;
+    margin-bottom: 10px;
+}
+
+.strict-stats {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+.strict-stats p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.strict-counterexamples-section {
+    margin: 20px 0;
+}
+
+.strict-counterexamples-list {
+    list-style: none;
+    padding: 0;
+}
+
+.strict-counterexample-item {
+    background: #ffebee;
+    border-left: 4px solid #d32f2f;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.strict-counterexample-item strong {
+    color: #b71c1c;
+    font-size: 16px;
+}
+
+.counterexample-details {
+    margin-top: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+}
+
+.counterexample-details p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.field-values {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.field-values li {
+    padding: 5px 10px;
+    margin: 5px 0;
+    background: #f5f5f5;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+.field-values code {
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+.strict-note {
+    background: #fff8e1;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #ffa726;
+    margin-top: 10px;
+}
+
+.strict-note p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.smt-note {
+    background: #e1f5fe;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #0288d1;
+    margin-top: 20px;
+}
+
+.smt-note h4 {
+    color: #01579b;
+    margin-bottom: 10px;
+}
+
+.smt-note ul {
+    margin: 10px 0;
+    padding-left: 25px;
+}
+
+.smt-note li {
+    margin: 8px 0;
+    line-height: 1.6;
+    color: #555;
+}
+
+.smt-note p {
+    margin: 10px 0;
+    color: #555;
+}

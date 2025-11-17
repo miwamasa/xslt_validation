@@ -6,15 +6,18 @@ const sourceXsdInput = document.getElementById('source-xsd');
 const targetXsdInput = document.getElementById('target-xsd');
 const xsltInput = document.getElementById('xslt');
 const validateBtn = document.getElementById('validate-btn');
+const validateStrictBtn = document.getElementById('validate-strict-btn');
 const loadSampleBtn = document.getElementById('load-sample-btn');
 const loadSample2Btn = document.getElementById('load-sample2-btn');
 const clearBtn = document.getElementById('clear-btn');
 const resultsSection = document.getElementById('results-section');
+const strictResultsSection = document.getElementById('strict-results-section');
 const loadingDiv = document.getElementById('loading');
 const errorMessageDiv = document.getElementById('error-message');
 
 // Event listeners
 validateBtn.addEventListener('click', validateXSLT);
+validateStrictBtn.addEventListener('click', validateStrictXSLT);
 loadSampleBtn.addEventListener('click', loadSample);
 loadSample2Btn.addEventListener('click', loadSample2);
 clearBtn.addEventListener('click', clearInputs);
@@ -529,7 +532,152 @@ function clearInputs() {
     targetXsdInput.value = '';
     xsltInput.value = '';
     resultsSection.style.display = 'none';
+    strictResultsSection.style.display = 'none';
     errorMessageDiv.style.display = 'none';
+}
+
+async function validateStrictXSLT() {
+    const sourceXsd = sourceXsdInput.value.trim();
+    const targetXsd = targetXsdInput.value.trim();
+    const xslt = xsltInput.value.trim();
+
+    if (!sourceXsd || !targetXsd || !xslt) {
+        showError('すべてのフィールドを入力してください。');
+        return;
+    }
+
+    // Show loading
+    loadingDiv.style.display = 'block';
+    resultsSection.style.display = 'none';
+    strictResultsSection.style.display = 'none';
+    errorMessageDiv.style.display = 'none';
+
+    try {
+        const response = await fetch(`${API_URL}/validate-strict`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                source_xsd: sourceXsd,
+                target_xsd: targetXsd,
+                xslt: xslt
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showError(data.error || '検証エラーが発生しました。');
+            return;
+        }
+
+        // Display strict validation results
+        displayStrictResults(data);
+
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+    }
+}
+
+function displayStrictResults(data) {
+    strictResultsSection.style.display = 'block';
+    resultsSection.style.display = 'none';
+
+    displayStrictValidity(data.strict_validity);
+}
+
+function displayStrictValidity(strictValidity) {
+    const content = document.getElementById('strict-validity-content');
+
+    if (!strictValidity) {
+        content.innerHTML = '<p>厳密検証情報がありません。</p>';
+        return;
+    }
+
+    if (strictValidity.error) {
+        content.innerHTML = `<p class="error-message">${escapeHtml(strictValidity.error)}</p>`;
+        return;
+    }
+
+    let html = '<div class="strict-validity-section">';
+
+    // Validity status badge
+    const status = strictValidity.is_valid ? 'valid' : 'invalid';
+    const statusText = strictValidity.is_valid ? '✓ 妥当' : '✗ 妥当でない';
+    html += `<span class="status-badge status-${status}">${statusText}</span>`;
+
+    // Explanation
+    html += '<div class="strict-explanation">';
+    html += '<h4>SMTソルバー（Z3）による厳密な制約検証</h4>';
+
+    const explanationLines = strictValidity.explanation.split('\n');
+    explanationLines.forEach(line => {
+        if (line.trim()) {
+            html += `<p>${escapeHtml(line)}</p>`;
+        }
+    });
+    html += '</div>';
+
+    // Statistics
+    html += '<div class="strict-stats">';
+    html += '<h4>検証統計:</h4>';
+    html += `<p><strong>検証したパターン数:</strong> ${strictValidity.total_patterns_checked}</p>`;
+    html += `<p><strong>制約違反のあるパターン:</strong> ${strictValidity.patterns_with_issues}</p>`;
+    html += '</div>';
+
+    // Counterexamples (if any)
+    if (strictValidity.counterexamples && strictValidity.counterexamples.length > 0) {
+        html += '<div class="strict-counterexamples-section">';
+        html += '<h4>反例（SMTソルバーが発見した具体的な値）:</h4>';
+        html += '<ul class="strict-counterexamples-list">';
+
+        strictValidity.counterexamples.forEach((ce, index) => {
+            html += '<li class="strict-counterexample-item">';
+            html += `<strong>${index + 1}. ${escapeHtml(ce.element)}</strong><br>`;
+
+            html += '<div class="counterexample-details">';
+            html += '<p><strong>具体的な反例の値:</strong></p>';
+            html += '<ul class="field-values">';
+            for (const [field, value] of Object.entries(ce.field_values)) {
+                html += `<li><code>${escapeHtml(field)} = ${escapeHtml(value)}</code></li>`;
+            }
+            html += '</ul>';
+
+            html += `<p><strong>ソース制約:</strong> ${escapeHtml(ce.source_constraint)}</p>`;
+            html += `<p><strong>前像制約:</strong> ${escapeHtml(ce.preimage_constraint)}</p>`;
+            html += `<p><strong>理由:</strong> ${escapeHtml(ce.reason)}</p>`;
+            html += '</div>';
+
+            html += '</li>';
+        });
+
+        html += '</ul>';
+        html += '<div class="strict-note">';
+        html += '<p><strong>注意:</strong> これらの反例はZ3 SMTソルバーによって発見された具体的な値です。';
+        html += 'ソース文法では許可されているがMTT変換の制約を満たさない実際の値を示しています。</p>';
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // SMT note
+    html += '<div class="smt-note">';
+    html += '<h4>SMTソルバーについて:</h4>';
+    html += '<p>この検証はZ3 SMTソルバーを使用して、制約の充足可能性を厳密に検証します:</p>';
+    html += '<ul>';
+    html += '<li>ソース文法の制約を抽出</li>';
+    html += '<li>前像の制約を抽出</li>';
+    html += '<li>Z3で「ソースで有効だが前像で無効な値」の存在をチェック</li>';
+    html += '<li>存在すれば具体的な反例値を生成</li>';
+    html += '</ul>';
+    html += '<p>これにより、要素名だけでなく制約レベルでの妥当性が保証されます。</p>';
+    html += '</div>';
+
+    html += '</div>';
+
+    content.innerHTML = html;
 }
 
 function showError(message) {
