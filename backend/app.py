@@ -422,6 +422,20 @@ def convert_to_mtt():
         }), 500
 
 
+@app.route('/samples/<path:filename>', methods=['GET'])
+def serve_samples(filename):
+    """Serve sample files"""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        samples_dir = os.path.join(base_dir, 'samples')
+        return send_from_directory(samples_dir, filename)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'File not found: {filename}'
+        }), 404
+
+
 @app.route('/sample2/<path:filename>', methods=['GET'])
 def serve_sample2(filename):
     """Serve sample2 files"""
