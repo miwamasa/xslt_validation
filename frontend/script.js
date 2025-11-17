@@ -1,5 +1,6 @@
 // API endpoint
 const API_URL = 'http://localhost:5000/api';
+const BASE_URL = API_URL.replace('/api', ''); // http://localhost:5000
 
 // DOM elements
 const sourceXsdInput = document.getElementById('source-xsd');
@@ -456,9 +457,9 @@ async function loadSample() {
     try {
         // Load sample files
         const [sourceXsd, targetXsd, xslt] = await Promise.all([
-            fetch('/samples/source.xsd').then(r => r.text()),
-            fetch('/samples/target.xsd').then(r => r.text()),
-            fetch('/samples/transform.xsl').then(r => r.text())
+            fetch(`${BASE_URL}/samples/source.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/samples/target.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/samples/transform.xsl`).then(r => r.text())
         ]);
 
         sourceXsdInput.value = sourceXsd;
@@ -475,9 +476,9 @@ async function loadSample2() {
     try {
         // Load sample2 files (complex scenario)
         const [sourceXsd, targetXsd, xslt] = await Promise.all([
-            fetch('/sample2/source.xsd').then(r => r.text()),
-            fetch('/sample2/target.xsd').then(r => r.text()),
-            fetch('/sample2/transform.xslt').then(r => r.text())
+            fetch(`${BASE_URL}/sample2/source.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/sample2/target.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/sample2/transform.xslt`).then(r => r.text())
         ]);
 
         sourceXsdInput.value = sourceXsd;
