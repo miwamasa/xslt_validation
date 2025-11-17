@@ -32,6 +32,7 @@
 
                 <div class="button-group">
                     <button id="validate-btn" class="btn btn-primary">検証を実行</button>
+                    <button id="validate-strict-btn" class="btn btn-primary btn-strict">厳密検証 (SMT)</button>
                     <button id="load-sample-btn" class="btn btn-secondary">サンプル1を読み込む</button>
                     <button id="load-sample2-btn" class="btn btn-secondary">サンプル2を読み込む (複雑)</button>
                     <button id="clear-btn" class="btn btn-secondary">クリア</button>
@@ -81,6 +82,15 @@
                 <div class="result-card" id="validity">
                     <h3>7. 妥当性検証 L(Src) ⊆ pre<sub>T</sub>(L(Tgt))</h3>
                     <div id="validity-content"></div>
+                </div>
+            </div>
+
+            <div class="results-section" id="strict-results-section" style="display: none;">
+                <h2>厳密検証結果 (SMT Solver)</h2>
+
+                <div class="result-card" id="strict-validity">
+                    <h3>SMTソルバーによる制約検証</h3>
+                    <div id="strict-validity-content"></div>
                 </div>
             </div>
 

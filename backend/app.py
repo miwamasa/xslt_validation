@@ -15,6 +15,7 @@ from backend.mtt_converter import XSLTToMTTConverter
 from backend.type_validator import TypePreservationValidator
 from backend.preimage_computer import PreimageComputer
 from backend.validity_checker import ValidityChecker
+from backend.strict_validity_checker import StrictValidityChecker
 
 app = Flask(__name__)
 CORS(app)
@@ -235,6 +236,77 @@ def validate():
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}',
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/validate-strict', methods=['POST'])
+def validate_strict():
+    """
+    Strict validation endpoint using SMT solver
+    Performs rigorous constraint checking with Z3
+    """
+    try:
+        data = request.json
+
+        source_xsd = data.get('source_xsd', '')
+        target_xsd = data.get('target_xsd', '')
+        xslt = data.get('xslt', '')
+
+        if not all([source_xsd, target_xsd, xslt]):
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields: source_xsd, target_xsd, xslt'
+            }), 400
+
+        # Parse grammars
+        source_parser = XSDParser()
+        source_grammar = source_parser.parse(source_xsd)
+
+        target_parser = XSDParser()
+        target_grammar = target_parser.parse(target_xsd)
+
+        # Convert XSLT to MTT
+        converter = XSLTToMTTConverter()
+        mtt = converter.convert(xslt)
+
+        # Compute preimage
+        preimage_computer = PreimageComputer()
+        preimage_result = preimage_computer.compute_preimage(target_grammar, mtt)
+
+        # Perform strict validity check with SMT solver
+        strict_checker = StrictValidityChecker()
+        strict_result = strict_checker.check_strict_validity(
+            source_grammar,
+            preimage_result
+        )
+
+        # Return results
+        return jsonify({
+            'success': True,
+            'strict_validity': {
+                'is_valid': strict_result.is_valid,
+                'total_patterns_checked': strict_result.total_patterns_checked,
+                'patterns_with_issues': strict_result.patterns_with_constraint_issues,
+                'explanation': strict_result.explanation,
+                'counterexamples': [
+                    {
+                        'element': ce.element,
+                        'pattern': ce.pattern,
+                        'field_values': {k: str(v) for k, v in ce.field_values.items()},
+                        'reason': ce.reason,
+                        'source_constraint': ce.source_constraint,
+                        'preimage_constraint': ce.preimage_constraint
+                    }
+                    for ce in strict_result.counterexamples
+                ]
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error in strict validation: {str(e)}',
             'traceback': traceback.format_exc()
         }), 500
 
