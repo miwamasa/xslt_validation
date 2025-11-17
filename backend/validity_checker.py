@@ -97,27 +97,65 @@ class ValidityChecker:
         # Step 1: Extract source patterns from grammar
         source_patterns = self._extract_source_patterns(source_grammar)
 
+        # Debug output: Print preimage patterns
+        print("\n" + "=" * 70)
+        print("DEBUG: Preimage Patterns (前像パターン)")
+        print("=" * 70)
+        if preimage_result.accepted_patterns:
+            for i, pattern in enumerate(preimage_result.accepted_patterns, 1):
+                print(f"{i}. Element: {pattern.element}")
+                print(f"   Children: {pattern.children}")
+                if pattern.constraints:
+                    print(f"   Constraints: {pattern.constraints}")
+                print(f"   Full pattern: {pattern}")
+                print()
+        else:
+            print("  (No accepted patterns in preimage)")
+            print()
+
+        print("Source Patterns to Check (チェック対象のソースパターン)")
+        print("-" * 70)
+        if source_patterns:
+            for i, pattern in enumerate(source_patterns, 1):
+                print(f"{i}. Element: {pattern.element}")
+                print(f"   Children: {pattern.children}")
+                print()
+        else:
+            print("  (No source patterns)")
+            print()
+        print("=" * 70 + "\n")
+
         # Step 2: Check coverage of each source pattern
         counterexamples = []
         covered_count = 0
 
-        for src_pattern in source_patterns:
+        print("Coverage Check Results (カバレッジチェック結果)")
+        print("=" * 70)
+
+        for i, src_pattern in enumerate(source_patterns, 1):
             is_covered, reason = self._is_pattern_covered(
                 src_pattern,
                 preimage_result.accepted_patterns
             )
 
+            pattern_str = f"{src_pattern.element}({', '.join(src_pattern.children)})"
+
             if is_covered:
                 covered_count += 1
+                print(f"{i}. ✓ COVERED: {pattern_str}")
+                print(f"   {reason}")
             else:
                 # Found a counterexample
                 counterexample = Counterexample(
                     element=src_pattern.element,
-                    pattern=f"{src_pattern.element}({', '.join(src_pattern.children)})",
+                    pattern=pattern_str,
                     reason=reason,
                     production=src_pattern.production
                 )
                 counterexamples.append(counterexample)
+                print(f"{i}. ✗ NOT COVERED: {pattern_str}")
+                print(f"   {reason}")
+            print()
 
         # Step 3: Calculate statistics
         total = len(source_patterns)
@@ -126,6 +164,17 @@ class ValidityChecker:
 
         # Step 4: Determine validity
         is_valid = (uncovered == 0)
+
+        # Debug output: Summary
+        print("=" * 70)
+        print("VALIDITY CHECK SUMMARY (妥当性検証サマリー)")
+        print("=" * 70)
+        print(f"Total source patterns: {total}")
+        print(f"Covered patterns: {covered_count}")
+        print(f"Uncovered patterns: {uncovered}")
+        print(f"Coverage: {coverage:.1f}%")
+        print(f"Validity: {'✓ VALID' if is_valid else '✗ INVALID'}")
+        print("=" * 70 + "\n")
 
         # Generate explanation
         if is_valid:
