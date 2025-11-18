@@ -17,10 +17,11 @@
     </xs:complexType>
   </xs:element>
 
-  <!-- Total emission in kgCO2e (must be non-negative) -->
+  <!-- Total emission in kgCO2e (must be non-negative, max 500) -->
   <xs:simpleType name="NonNegativeDecimal">
     <xs:restriction base="xs:decimal">
       <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="500"/>
     </xs:restriction>
   </xs:simpleType>
 

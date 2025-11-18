@@ -189,6 +189,9 @@ XSLT内で乗算を使用:
 
 ## SMT検証の期待結果
 
+### ケース1: Year制約の検出
+
+**デフォルトのtarget.xsd:**
 ```
 ✗ 妥当性不成立
 検証したパターン: 1
@@ -205,6 +208,119 @@ XSLT内で乗算を使用:
          XSLTは Year >= 2020 を要求する
 ```
 
+### ケース2: 計算結果の制約検証
+
+**target.xsdに `<xs:maxInclusive value="500"/>` を追加した場合:**
+
+```xml
+<xs:simpleType name="NonNegativeDecimal">
+  <xs:restriction base="xs:decimal">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="500"/>  <!-- 追加 -->
+  </xs:restriction>
+</xs:simpleType>
+```
+
+**制約の意味:**
+- `totalEmission <= 500` が必要
+- しかし `totalEmission = PowerConsumption × EmissionFactor`
+- ソースには `PowerConsumption` の上限がない！
+
+**期待される検出（SMT厳密検証）:**
+```
+✗ 妥当性不成立
+検証したパターン: 1
+制約違反: 1
+
+反例:
+1. Facility(*)
+   具体的な値:
+   - PowerConsumption = 1001 (または >= 501 の任意の値)
+   - EmissionFactor = 1.0
+   - Year = 2020
+
+   計算結果: totalEmission = 1001 × 1.0 = 1001 > 500
+
+   理由: 計算結果が出力制約 (totalEmission <= 500) を違反
+```
+
+**重要な注意:**
+現在の基本的な型保存性検証は、直接コピーされるフィールドの制約は検証しますが、
+**計算式を含む属性の制約検証**は限定的です。
+
+このような計算を含む制約違反は、**SMT厳密検証**を使用することで検出できます：
+1. Z3ソルバーが計算式を解析
+2. 出力制約 `totalEmission <= 500` を入力制約に逆算
+3. `PowerConsumption × EmissionFactor > 500` となる具体的な値を発見
+
+## 現在の実装の制限事項
+
+### 計算式を含む制約の検証
+
+現在のバージョンでは、以下の制限があります：
+
+**検出できるもの:**
+- ✅ `xsl:if`/`xsl:choose`による条件フィルタリング（Year >= 2020など）
+- ✅ 直接コピーされるフィールドの型制約
+- ✅ 単純なフィールドマッピングの制約
+
+**検出が限定的なもの:**
+- ⚠️ **計算式を含む属性の制約**（totalEmission = PowerConsumption × EmissionFactorなど）
+- ⚠️ 出力スキーマの制約から入力制約への逆算
+- ⚠️ 複数フィールドの演算結果に対する制約
+
+### 回避策
+
+出力に上限制約を加えたい場合（例：totalEmission <= 500）、以下の方法があります：
+
+#### 方法1: ソーススキーマに制約を追加
+
+```xml
+<!-- source.xsdに追加 -->
+<xs:simpleType name="LimitedPowerConsumption">
+  <xs:restriction base="xs:decimal">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="500"/>  <!-- 上限を追加 -->
+  </xs:restriction>
+</xs:simpleType>
+```
+
+これにより、入力時点で制約が強制されます。
+
+#### 方法2: XSLTに明示的なフィルタリングを追加
+
+```xslt
+<xsl:template match="Facility">
+  <!-- 計算結果が500以下の場合のみ出力 -->
+  <xsl:if test="PowerConsumption * EmissionFactor &lt;= 500 and
+                PowerConsumption &gt;= 0 and
+                EmissionFactor &gt; 0 and
+                Year &gt;= 2020">
+    <FacilityEmission .../>
+  </xsl:if>
+</xsl:template>
+```
+
+この制約は前像計算とSMT検証で検出されます。
+
+### 将来の改善
+
+以下の機能拡張が計画されています：
+
+1. **出力スキーマ制約の前像計算への統合**
+   - ターゲットスキーマの制約を読み取り
+   - 属性の制約を抽出
+   - 入力制約に逆算
+
+2. **計算式の解析と制約伝播**
+   - XPath式のパース
+   - 演算子（+, -, *, /）の処理
+   - SMTソルバーへの変換
+
+3. **高度なSMT検証**
+   - 計算式を含む制約の完全な検証
+   - 出力制約違反の自動検出
+
 ## 学習ポイント
 
 1. **計算を含む変換**: XSLTで算術演算を使用
@@ -212,3 +328,4 @@ XSLT内で乗算を使用:
 3. **ビジネスロジック**: スキーマに含まれないルールの追加
 4. **型安全性**: 計算結果が出力制約を満たすことの検証
 5. **SMTの威力**: 具体的な反例値の自動生成
+6. **実装の限界**: 計算式を含む制約検証の課題と回避策
