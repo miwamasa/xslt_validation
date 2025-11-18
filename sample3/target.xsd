@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Root element: CO2 emission report -->
+  <xs:element name="EmissionReport">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="FacilityEmission" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="facility" type="xs:string" use="required"/>
+            <xs:attribute name="totalEmission" type="NonNegativeDecimal" use="required"/>
+            <xs:attribute name="year" type="xs:integer" use="required"/>
+            <xs:attribute name="verified" type="xs:boolean" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Total emission in kgCO2e (must be non-negative) -->
+  <xs:simpleType name="NonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

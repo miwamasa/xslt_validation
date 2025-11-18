@@ -10,6 +10,7 @@ const validateBtn = document.getElementById('validate-btn');
 const validateStrictBtn = document.getElementById('validate-strict-btn');
 const loadSampleBtn = document.getElementById('load-sample-btn');
 const loadSample2Btn = document.getElementById('load-sample2-btn');
+const loadSample3Btn = document.getElementById('load-sample3-btn');
 const clearBtn = document.getElementById('clear-btn');
 const resultsSection = document.getElementById('results-section');
 const strictResultsSection = document.getElementById('strict-results-section');
@@ -21,6 +22,7 @@ validateBtn.addEventListener('click', validateXSLT);
 validateStrictBtn.addEventListener('click', validateStrictXSLT);
 loadSampleBtn.addEventListener('click', loadSample);
 loadSample2Btn.addEventListener('click', loadSample2);
+loadSample3Btn.addEventListener('click', loadSample3);
 clearBtn.addEventListener('click', clearInputs);
 
 async function validateXSLT() {
@@ -487,6 +489,24 @@ async function loadSample2() {
 
     } catch (error) {
         showError('サンプル2の読み込みに失敗しました: ' + error.message);
+    }
+}
+
+async function loadSample3() {
+    try {
+        // Load sample3 files (calculation example: CO2 emission)
+        const [sourceXsd, targetXsd, xslt] = await Promise.all([
+            fetch(`${BASE_URL}/sample3/source.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/sample3/target.xsd`).then(r => r.text()),
+            fetch(`${BASE_URL}/sample3/transform.xslt`).then(r => r.text())
+        ]);
+
+        sourceXsdInput.value = sourceXsd;
+        targetXsdInput.value = targetXsd;
+        xsltInput.value = xslt;
+
+    } catch (error) {
+        showError('サンプル3の読み込みに失敗しました: ' + error.message);
     }
 }
 
