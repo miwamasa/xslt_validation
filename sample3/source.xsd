@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Root element: Power consumption data for facilities -->
+  <xs:element name="PowerUsageData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Facility" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="FacilityName" type="xs:string"/>
+              <xs:element name="PowerConsumption" type="NonNegativeDecimal"/>
+              <xs:element name="EmissionFactor" type="PositiveDecimal"/>
+              <xs:element name="Year" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Power consumption in kWh (must be non-negative) -->
+  <xs:simpleType name="NonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Emission factor in kgCO2e/kWh (must be positive) -->
+  <xs:simpleType name="PositiveDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

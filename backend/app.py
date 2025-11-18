@@ -450,6 +450,20 @@ def serve_sample2(filename):
         }), 404
 
 
+@app.route('/sample3/<path:filename>', methods=['GET'])
+def serve_sample3(filename):
+    """Serve sample3 files (calculation example)"""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sample3_dir = os.path.join(base_dir, 'sample3')
+        return send_from_directory(sample3_dir, filename)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'File not found: {filename}'
+        }), 404
+
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
