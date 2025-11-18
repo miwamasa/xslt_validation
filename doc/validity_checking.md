@@ -725,6 +725,253 @@ After:  Validity: ✗ (75% coverage)
    - キャッシング戦略
    - 増分検証
 
+## SMTソルバーによる厳密検証
+
+### 基本的な妥当性検証の限界
+
+上記の妥当性検証アルゴリズムは**要素レベル**のカバレッジをチェックしますが、制約の完全な検証には限界があります：
+
+**問題例:**
+```xml
+<!-- ソーススキーマ: 年齢に制約なし -->
+<xs:element name="Age" type="xs:integer"/>
+
+<!-- XSLT: 18歳以上のみ変換 -->
+<xsl:if test="Age >= 18">
+  <Adult age="{Age}"/>
+</xsl:if>
+```
+
+基本的な検証:
+- ✓ 要素 `Age` は前像に含まれる
+- しかし `Age < 18` の値は実際には変換されない！
+
+### SMT（Satisfiability Modulo Theories）ソルバーの活用
+
+**Z3ソルバー**を使用して、制約の完全な検証と具体的な反例生成を行います。
+
+#### 理論的アプローチ
+
+反例を見つける問題を充足可能性問題として定式化：
+
+```
+∃x. source_constraint(x) ∧ ¬preimage_constraint(x)
+```
+
+つまり：
+- ソース制約を満たすが（有効な入力）
+- 前像制約を満たさない（変換が失敗または無効な出力）
+- そのような具体的な値 x が存在するか？
+
+#### アルゴリズム
+
+```
+Algorithm: STRICT_VALIDITY_CHECK_WITH_Z3
+Input: source_grammar, preimage_result
+Output: StrictValidityResult
+
+1. FOR EACH preimage_pattern IN preimage_result.accepted_patterns:
+2.     IF preimage_pattern has constraints:
+3.
+4.         // Step 1: Z3ソルバーの初期化
+5.         solver ← new Z3.Solver()
+6.
+7.         // Step 2: フィールドの抽出と変数作成
+8.         fields ← EXTRACT_FIELDS(preimage_pattern.constraints)
+9.         z3_vars ← {}
+10.        FOR EACH field IN fields:
+11.            type ← INFER_FIELD_TYPE(field, source_grammar)
+12.            IF type == 'integer':
+13.                z3_vars[field] ← Z3.Int(field)
+14.            ELIF type == 'decimal':
+15.                z3_vars[field] ← Z3.Real(field)
+16.
+17.        // Step 3: ソース制約の追加（もしあれば）
+18.        source_constraints ← GET_SOURCE_CONSTRAINTS(source_grammar)
+19.        FOR EACH field, constraint IN source_constraints:
+20.            z3_constraint ← CONVERT_TO_Z3(constraint, z3_vars[field])
+21.            solver.add(z3_constraint)
+22.
+23.        // Step 4: 前像制約の否定を追加
+24.        preimage_z3_constraints ← []
+25.        FOR EACH constraint_str IN preimage_pattern.constraints:
+26.            z3_constraint ← PARSE_CONSTRAINT_TO_Z3(constraint_str, z3_vars)
+27.            preimage_z3_constraints.APPEND(z3_constraint)
+28.
+29.        combined_preimage ← Z3.And(*preimage_z3_constraints)
+30.        solver.add(Z3.Not(combined_preimage))  // 否定を追加！
+31.
+32.        // Step 5: 充足可能性チェック
+33.        result ← solver.check()
+34.
+35.        IF result == SAT:
+36.            // 反例発見！
+37.            model ← solver.model()
+38.            field_values ← {}
+39.            FOR EACH field, var IN z3_vars:
+40.                field_values[field] ← model[var]
+41.
+42.            counterexample ← StrictCounterexample(
+43.                element=preimage_pattern.element,
+44.                field_values=field_values,
+45.                reason="Found concrete values violating constraints"
+46.            )
+47.            YIELD counterexample
+48.
+49. RETURN StrictValidityResult(...)
+```
+
+#### 制約のZ3への変換
+
+```python
+def _parse_constraint_to_z3(constraint_str: str, z3_vars: Dict):
+    """制約文字列をZ3式に変換"""
+
+    # "Age >= 18" のパース
+    match = re.match(r'(\w+)\s*(>=|<=|>|<|!=|==)\s*(.+)', constraint_str)
+    if match:
+        field = match.group(1)
+        op = match.group(2)
+        value = int(match.group(3))
+
+        var = z3_vars[field]
+
+        if op == '>=':
+            return var >= value
+        elif op == '<=':
+            return var <= value
+        # ... 他の演算子
+
+    # "A and B" の処理
+    if ' and ' in constraint_str:
+        parts = constraint_str.split(' and ')
+        sub_constraints = [_parse_constraint_to_z3(p, z3_vars) for p in parts]
+        return And(*sub_constraints)
+
+    return None
+```
+
+### 実装例
+
+#### 入力
+
+**ソースXSD:**
+```xml
+<xs:element name="Employee">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="Age" type="xs:integer"/>  <!-- 制約なし -->
+      <xs:element name="Salary" type="xs:integer"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+```
+
+**前像パターン:**
+```
+Employee(*) where Age >= 18 and Salary > 0
+```
+
+#### Z3による検証
+
+```python
+# Z3変数の作成
+Age = Int('Age')
+Salary = Int('Salary')
+
+# ソース制約（なし - 任意の整数）
+# （制約を追加しない）
+
+# 前像制約の否定
+# NOT (Age >= 18 AND Salary > 0)
+# ⇔ Age < 18 OR Salary <= 0
+solver.add(Not(And(Age >= 18, Salary > 0)))
+
+# 充足可能性チェック
+result = solver.check()  # SAT
+
+# モデルの取得
+model = solver.model()
+print(f"Age = {model[Age]}")      # 例: Age = 17
+print(f"Salary = {model[Salary]}")  # 例: Salary = 1
+```
+
+#### 結果
+
+```
+反例発見:
+Element: Employee
+Concrete values:
+  - Age = 17
+  - Salary = 1
+
+理由:
+ソーススキーマでは Age=17, Salary=1 は有効な入力ですが、
+XSLTの条件 "Age >= 18 and Salary > 0" を満たさないため変換されません。
+```
+
+### 実用例
+
+#### Sample 1の検証結果
+
+```
+✓ 妥当性成立
+検証したパターン: 1
+制約違反: 0
+
+すべての有効なソース入力が正常に変換されます。
+```
+
+#### Sample 2の検証結果
+
+```
+✗ 妥当性不成立
+検証したパターン: 3
+制約違反: 2
+
+反例:
+1. Employee(*)
+   Age = 17, Salary = 1
+   理由: ソースは制約なし、前像は Age >= 18 を要求
+
+2. Department(*)
+   Budget = -1
+   理由: ソースは制約なし、前像は Budget >= 0 を要求
+```
+
+### 基本検証 vs SMT厳密検証
+
+| 検証方法 | チェック内容 | 精度 | 反例 | 計算量 |
+|---------|------------|------|------|--------|
+| 基本的な妥当性検証 | 要素レベルのカバレッジ | 構造的 | 抽象的 | O(n × m) |
+| SMT厳密検証 | 制約レベルの完全検証 | 意味論的 | 具体的な値 | SMTソルバー依存 |
+
+**使い分け:**
+- **基本検証**: 高速な初期チェック、構造的な問題の検出
+- **SMT検証**: 制約の完全な検証、デバッグ用の具体的な反例取得
+
+### 利点と制限
+
+#### 利点
+
+1. **完全性**: 制約の完全な検証（数値、比較演算）
+2. **具体的反例**: デバッグに有用な具体的な値
+3. **自動化**: Z3が自動で反例を探索
+4. **正確性**: 形式的な証明に基づく
+
+#### 制限
+
+1. **計算コスト**: SMTソルバーは基本検証より遅い
+2. **制約の種類**: 現在は数値制約のみ対応（文字列、正規表現は未対応）
+3. **複雑な条件**: ネストした条件や動的XPathは限定的
+
+### 今後の拡張
+
+1. **文字列制約**: Z3のString理論を活用
+2. **配列制約**: 要素の出現回数の検証
+3. **最適化**: SMTクエリのキャッシング
+4. **段階的検証**: 要素ごとに段階的に検証
+
 ## まとめ
 
 妥当性検証は、XSLT変換の正しさを保証する強力なツールです:
@@ -734,5 +981,6 @@ After:  Validity: ✗ (75% coverage)
 3. ✅ **実用的実装**: O(n × m) の効率的なアルゴリズム
 4. ✅ **反例報告**: カバーされないパターンの特定
 5. ✅ **統計情報**: カバレッジ率の提供
+6. ✅ **SMT厳密検証**: Z3による制約の完全な検証と具体的反例生成
 
-型保存性検証と組み合わせることで、XSLT変換の包括的な正しさを保証できます。
+基本的な妥当性検証とSMT厳密検証を組み合わせることで、構造レベルと制約レベルの両方で XSLT変換の包括的な正しさを保証できます。
